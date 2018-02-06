@@ -23,6 +23,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatImageButton;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -44,6 +45,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.nineoldandroids.view.ViewHelper;
 import com.swifty.swifty_ad.AdmobManager;
@@ -480,6 +482,15 @@ public class FinestWebViewActivity extends AppCompatActivity
         webLayout = (FrameLayout) findViewById(R.id.webLayout);
         webView = new WebView(this);
         webLayout.addView(webView);
+
+        if (!TextUtils.isEmpty(adUnitId)) {
+            AdView mAdView = new AdView(this);
+            mAdView.setVisibility(View.GONE);
+            mAdView.setAdSize(AdSize.BANNER);
+            mAdView.setAdUnitId(adUnitId);
+            ((LinearLayout) findViewById(R.id.root)).addView(mAdView);
+            if (AdmobManager.isInit()) AdmobManager.getInstance().playBannerAD(mAdView);
+        }
     }
 
     protected void layoutViews() {
@@ -884,9 +895,6 @@ public class FinestWebViewActivity extends AppCompatActivity
             menuOpenWithTv.setTextColor(menuTextColor);
             menuOpenWithTv.setPadding((int) menuTextPaddingLeft, 0, (int) menuTextPaddingRight, 0);
         }
-        if (AdmobManager.isInit()) {
-          //  AdmobManager.getInstance().playBannerAD(adView);
-        }
     }
 
     protected int getMaxWidth() {
@@ -1218,7 +1226,9 @@ public class FinestWebViewActivity extends AppCompatActivity
             }
 
             if (injectJavaScript != null) {
-                webView.evaluateJavascript(injectJavaScript, null);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    webView.evaluateJavascript(injectJavaScript, null);
+                }
             }
         }
 
