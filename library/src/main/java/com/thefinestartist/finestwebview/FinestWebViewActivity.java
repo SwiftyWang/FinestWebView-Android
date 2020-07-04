@@ -14,15 +14,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import androidx.annotation.DrawableRes;
-import com.google.android.material.appbar.AppBarLayout;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.core.content.ContextCompat;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.appcompat.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -47,7 +38,8 @@ import android.widget.TextView;
 
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
-import com.nineoldandroids.view.ViewHelper;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.snackbar.Snackbar;
 import com.swifty.swifty_ad.AdmobManager;
 import com.thefinestartist.converters.UnitConverter;
 import com.thefinestartist.finestwebview.enums.Position;
@@ -61,6 +53,14 @@ import com.thefinestartist.utils.etc.APILevel;
 import com.thefinestartist.utils.service.ClipboardManagerUtil;
 import com.thefinestartist.utils.ui.DisplayUtil;
 import com.thefinestartist.utils.ui.ViewUtil;
+
+import androidx.annotation.DrawableRes;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.appcompat.widget.Toolbar;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.content.ContextCompat;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 //MailTo Imports
 
@@ -1084,18 +1084,18 @@ public class FinestWebViewActivity extends AppCompatActivity
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
         if (toolbarScrollFlags == 0) return;
-
-        ViewHelper.setTranslationY(gradient, verticalOffset);
-        ViewHelper.setAlpha(gradient,
+        gradient.setTranslationY(verticalOffset);
+        gradient.setTranslationY(verticalOffset);
+        gradient.setAlpha(
                 1 - (float) Math.abs(verticalOffset) / (float) appBarLayout.getTotalScrollRange());
 
         switch (progressBarPosition) {
             case BOTTON_OF_TOOLBAR:
-                ViewHelper.setTranslationY(progressBar,
+                progressBar.setTranslationY(
                         Math.max(verticalOffset, progressBarHeight - appBarLayout.getTotalScrollRange()));
                 break;
             case TOP_OF_WEBVIEW:
-                ViewHelper.setTranslationY(progressBar, verticalOffset);
+                progressBar.setTranslationY(verticalOffset);
                 break;
             case TOP_OF_TOOLBAR:
             case BOTTOM_OF_WEBVIEW:
@@ -1103,10 +1103,8 @@ public class FinestWebViewActivity extends AppCompatActivity
                 break;
         }
 
-        if (menuLayout.getVisibility() == View.VISIBLE
-                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            ViewHelper.setTranslationY(menuLayout,
-                    Math.max(verticalOffset, -getResources().getDimension(R.dimen.defaultMenuLayoutMargin)));
+        if (menuLayout.getVisibility() == View.VISIBLE) {
+            menuLayout.setTranslationY(Math.max(verticalOffset, -getResources().getDimension(R.dimen.defaultMenuLayoutMargin)));
         }
     }
 
