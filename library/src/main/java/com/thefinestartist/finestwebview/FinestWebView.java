@@ -1,20 +1,14 @@
 package com.thefinestartist.finestwebview;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import androidx.annotation.AnimRes;
-import androidx.annotation.ArrayRes;
-import androidx.annotation.ColorInt;
-import androidx.annotation.ColorRes;
-import androidx.annotation.DimenRes;
-import androidx.annotation.DrawableRes;
-import androidx.annotation.NonNull;
-import androidx.annotation.StringRes;
-import androidx.annotation.StyleRes;
-import com.google.android.material.appbar.AppBarLayout.LayoutParams.ScrollFlags;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.webkit.WebSettings;
 
+import com.google.android.material.appbar.AppBarLayout.LayoutParams.ScrollFlags;
 import com.thefinestartist.Base;
 import com.thefinestartist.finestwebview.enums.Position;
 import com.thefinestartist.finestwebview.listeners.BroadCastManager;
@@ -25,6 +19,18 @@ import com.thefinestartist.utils.content.Res;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.annotation.AnimRes;
+import androidx.annotation.ArrayRes;
+import androidx.annotation.ColorInt;
+import androidx.annotation.ColorRes;
+import androidx.annotation.DimenRes;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
+import androidx.annotation.StyleRes;
+import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.browser.customtabs.CustomTabsService;
 
 /**
  * Created by Leonardo on 11/21/15.
@@ -166,6 +172,7 @@ public class FinestWebView {
         protected String data;
         protected String url;
         protected String adsId;
+        protected boolean enableChromeTab;
 
         public Builder(@NonNull Activity activity) {
             this.context = activity;
@@ -900,6 +907,11 @@ public class FinestWebView {
             return this;
         }
 
+        public Builder setEnableChromeTab(boolean enable) {
+            this.enableChromeTab = enable;
+            return this;
+        }
+
         public void load(@StringRes int dataRes) {
             load(Res.getString(dataRes));
         }
@@ -927,6 +939,9 @@ public class FinestWebView {
             this.data = data;
             this.key = System.identityHashCode(this);
 
+            if (enableChromeTab && usingCustomTab()) {
+                return;
+            }
             if (!listeners.isEmpty()) new BroadCastManager(context, key, listeners);
 
             Intent intent = new Intent(context, FinestWebViewActivity.class);
@@ -937,6 +952,33 @@ public class FinestWebView {
             if (context instanceof Activity) {
                 ((Activity) context).overridePendingTransition(animationOpenEnter, animationOpenExit);
             }
+        }
+
+        private boolean usingCustomTab() {
+            if (!customTabSupport()) {
+                return false;
+            }
+            try {
+                CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+                builder.setToolbarColor(toolbarColor)
+                        .setShowTitle(true)
+                        .addDefaultShareMenuItem()
+                        .setStartAnimations(context, animationOpenEnter, animationOpenExit)
+                        .setExitAnimations(context, animationCloseEnter, animationCloseExit)
+                        .build()
+                        .launchUrl(context, Uri.parse(url));
+                return true;
+            } catch (ActivityNotFoundException e) {
+                return false;
+            }
+        }
+
+        private boolean customTabSupport() {
+            String CHROME_PACKAGE = "com.android.chrome";
+            Intent serviceIntent = new Intent(CustomTabsService.ACTION_CUSTOM_TABS_CONNECTION);
+            serviceIntent.setPackage(CHROME_PACKAGE);
+            List<ResolveInfo> resolveInfos = context.getPackageManager().queryIntentServices(serviceIntent, 0);
+            return resolveInfos != null && !resolveInfos.isEmpty();
         }
     }
 }
