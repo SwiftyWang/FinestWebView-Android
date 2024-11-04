@@ -1,6 +1,9 @@
 package com.thefinestartist.finestwebview;
 
 import android.annotation.SuppressLint;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
@@ -41,18 +44,15 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.snackbar.Snackbar;
 import com.swifty.swifty_ad.AdmobManager;
-import com.thefinestartist.converters.UnitConverter;
 import com.thefinestartist.finestwebview.enums.Position;
 import com.thefinestartist.finestwebview.helpers.BitmapHelper;
 import com.thefinestartist.finestwebview.helpers.ColorHelper;
 import com.thefinestartist.finestwebview.helpers.TypefaceHelper;
 import com.thefinestartist.finestwebview.helpers.UrlParser;
 import com.thefinestartist.finestwebview.listeners.BroadCastManager;
+import com.thefinestartist.finestwebview.utils.DisplayUtil;
+import com.thefinestartist.finestwebview.utils.UnitConverter;
 import com.thefinestartist.finestwebview.views.ShadowLayout;
-import com.thefinestartist.utils.etc.APILevel;
-import com.thefinestartist.utils.service.ClipboardManagerUtil;
-import com.thefinestartist.utils.ui.DisplayUtil;
-import com.thefinestartist.utils.ui.ViewUtil;
 
 import androidx.annotation.DrawableRes;
 import androidx.appcompat.app.AppCompatActivity;
@@ -179,7 +179,6 @@ public class FinestWebViewActivity extends AppCompatActivity
     protected Boolean webViewAllowFileAccessFromFileURLs;
     protected String webViewGeolocationDatabasePath;
     protected Boolean webViewAppCacheEnabled;
-    protected String webViewAppCachePath;
     protected Boolean webViewDatabaseEnabled;
     protected Boolean webViewDomStorageEnabled;
     protected Boolean webViewGeolocationEnabled;
@@ -248,7 +247,7 @@ public class FinestWebViewActivity extends AppCompatActivity
         // resolve themed attributes
         TypedValue typedValue = new TypedValue();
         TypedArray typedArray = obtainStyledAttributes(typedValue.data, new int[]{
-                R.attr.colorPrimaryDark, R.attr.colorPrimary, R.attr.colorAccent,
+                android.R.attr.colorPrimaryDark, android.R.attr.colorPrimary, android.R.attr.colorAccent,
                 android.R.attr.textColorPrimary, android.R.attr.textColorSecondary,
                 android.R.attr.selectableItemBackground, android.R.attr.selectableItemBackgroundBorderless
         });
@@ -416,7 +415,6 @@ public class FinestWebViewActivity extends AppCompatActivity
         webViewGeolocationDatabasePath = builder.webViewGeolocationDatabasePath;
         webViewAppCacheEnabled =
                 builder.webViewAppCacheEnabled != null ? builder.webViewAppCacheEnabled : true;
-        webViewAppCachePath = builder.webViewAppCachePath;
         webViewDatabaseEnabled = builder.webViewDatabaseEnabled;
         webViewDomStorageEnabled =
                 builder.webViewDomStorageEnabled != null ? builder.webViewDomStorageEnabled : true;
@@ -556,7 +554,7 @@ public class FinestWebViewActivity extends AppCompatActivity
                     params.setMargins(0, (int) toolbarHeight, 0, 0);
                     break;
                 case BOTTOM_OF_WEBVIEW:
-                    params.setMargins(0, DisplayUtil.getHeight() - (int) progressBarHeight, 0, 0);
+                    params.setMargins(0, DisplayUtil.INSTANCE.getHeight(this) - (int) progressBarHeight, 0, 0);
                     break;
             }
             progressBar.setLayoutParams(params);
@@ -564,8 +562,8 @@ public class FinestWebViewActivity extends AppCompatActivity
 
         { // WebLayout
             float toolbarHeight = getResources().getDimension(R.dimen.toolbarHeight);
-            int statusBarHeight = DisplayUtil.getStatusBarHeight();
-            int screenHeight = DisplayUtil.getHeight();
+            int statusBarHeight = DisplayUtil.INSTANCE.getStatusBarHeight(this);
+            int screenHeight = DisplayUtil.INSTANCE.getHeight(this);
             float webLayoutMinimumHeight = screenHeight - toolbarHeight - statusBarHeight;
             if (showDivider && !gradientDivider) webLayoutMinimumHeight -= dividerHeight;
             webLayout.setMinimumHeight((int) webLayoutMinimumHeight);
@@ -714,8 +712,9 @@ public class FinestWebViewActivity extends AppCompatActivity
             if (webViewGeolocationDatabasePath != null) {
                 settings.setGeolocationDatabasePath(webViewGeolocationDatabasePath);
             }
-            if (webViewAppCacheEnabled != null) settings.setAppCacheEnabled(webViewAppCacheEnabled);
-            if (webViewAppCachePath != null) settings.setAppCachePath(webViewAppCachePath);
+            if (webViewAppCacheEnabled == null || !webViewAppCacheEnabled) {
+                settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+            }
             if (webViewDatabaseEnabled != null) settings.setDatabaseEnabled(webViewDatabaseEnabled);
             if (webViewDomStorageEnabled != null) settings.setDomStorageEnabled(webViewDomStorageEnabled);
             if (webViewGeolocationEnabled != null) {
@@ -783,11 +782,11 @@ public class FinestWebViewActivity extends AppCompatActivity
             gradient.setVisibility(showDivider && gradientDivider ? View.VISIBLE : View.GONE);
             divider.setVisibility(showDivider && !gradientDivider ? View.VISIBLE : View.GONE);
             if (gradientDivider) {
-                int dividerWidth = DisplayUtil.getWidth();
+                int dividerWidth = DisplayUtil.INSTANCE.getWidth(this);
                 Bitmap bitmap =
                         BitmapHelper.getGradientBitmap(dividerWidth, (int) dividerHeight, dividerColor);
                 BitmapDrawable drawable = new BitmapDrawable(getResources(), bitmap);
-                ViewUtil.setBackground(gradient, drawable);
+                gradient.setBackground(drawable);
 
                 CoordinatorLayout.LayoutParams params =
                         (CoordinatorLayout.LayoutParams) gradient.getLayoutParams();
@@ -821,7 +820,7 @@ public class FinestWebViewActivity extends AppCompatActivity
                     params.setMargins(0, (int) toolbarHeight, 0, 0);
                     break;
                 case BOTTOM_OF_WEBVIEW:
-                    params.setMargins(0, DisplayUtil.getHeight() - (int) progressBarHeight, 0, 0);
+                    params.setMargins(0, DisplayUtil.INSTANCE.getHeight(this) - (int) progressBarHeight, 0, 0);
                     break;
             }
             progressBar.setLayoutParams(params);
@@ -899,9 +898,9 @@ public class FinestWebViewActivity extends AppCompatActivity
 
     protected int getMaxWidth() {
         if (forward.getVisibility() == View.VISIBLE) {
-            return DisplayUtil.getWidth() - UnitConverter.dpToPx(100);
+            return DisplayUtil.INSTANCE.getWidth(this) - UnitConverter.INSTANCE.dpToPx(this, 100);
         } else {
-            return DisplayUtil.getWidth() - UnitConverter.dpToPx(52);
+            return DisplayUtil.INSTANCE.getWidth(this) - UnitConverter.INSTANCE.dpToPx(this, 52);
         }
     }
 
@@ -1016,7 +1015,9 @@ public class FinestWebViewActivity extends AppCompatActivity
 
             hideMenu();
         } else if (viewId == R.id.menuCopyLink) {
-            ClipboardManagerUtil.setText(webView.getUrl());
+            ClipboardManager clipboardManager = (ClipboardManager) this.getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("ClipboardManagerUtil", webView.getUrl());
+            clipboardManager.setPrimaryClip(clip);
 
             Snackbar snackbar = Snackbar.make(coordinatorLayout, getString(stringResCopiedToClipboard),
                     Snackbar.LENGTH_LONG);
@@ -1111,9 +1112,9 @@ public class FinestWebViewActivity extends AppCompatActivity
     protected void requestCenterLayout() {
         int maxWidth;
         if (webView.canGoBack() || webView.canGoForward()) {
-            maxWidth = DisplayUtil.getWidth() - UnitConverter.dpToPx(48) * 4;
+            maxWidth = DisplayUtil.INSTANCE.getWidth(this) - UnitConverter.INSTANCE.dpToPx(this, 48) * 4;
         } else {
-            maxWidth = DisplayUtil.getWidth() - UnitConverter.dpToPx(48) * 2;
+            maxWidth = DisplayUtil.INSTANCE.getWidth(this) - UnitConverter.INSTANCE.dpToPx(this, 48) * 2;
         }
 
         title.setMaxWidth(maxWidth);
@@ -1138,7 +1139,6 @@ public class FinestWebViewActivity extends AppCompatActivity
         super.onDestroy();
         BroadCastManager.unregister(FinestWebViewActivity.this, key);
         if (webView == null) return;
-        if (APILevel.require(11)) webView.onPause();
         destroyWebView();
     }
 

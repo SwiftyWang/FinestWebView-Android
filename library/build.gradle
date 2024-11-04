@@ -1,11 +1,14 @@
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library'
+    id "org.jetbrains.kotlin.android"
+}
 
 android {
-    compileSdkVersion Configs.COMPILE_SDK
-
+    namespace "com.thefinestartist.finestwebview"
     defaultConfig {
         minSdkVersion Configs.MIN_SDK
         targetSdkVersion Configs.TARGET_SDK
+        compileSdk Configs.COMPILE_SDK
         versionCode 9
         versionName "1.2.7"
         vectorDrawables.useSupportLibrary = true
@@ -14,12 +17,17 @@ android {
     lintOptions {
         abortOnError false
     }
+    compileOptions {
+        sourceCompatibility Versions.COMPAT_JAVA_VERSION
+        targetCompatibility Versions.COMPAT_JAVA_VERSION
+    }
+    kotlinOptions {
+        jvmTarget = '21'
+    }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.thefinestartist:utils:0.9.0'
-    annotationProcessor 'com.thefinestartist:compilers:0.9.0'
     implementation "com.google.android.material:material:${Versions.ANDROIDX_MATERIAL}"
     implementation "androidx.appcompat:appcompat:${Versions.ANDROIDX_APPCOMPAT}"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:${Versions.ANDROIDX_SWIPE_REFRESH}"

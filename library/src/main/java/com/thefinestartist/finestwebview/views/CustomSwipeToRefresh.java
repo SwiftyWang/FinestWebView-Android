@@ -6,8 +6,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.WebView;
-import com.thefinestartist.converters.UnitConverter;
-
+import com.thefinestartist.finestwebview.utils.UnitConverter;
 /**
  * Created by TheFinestArtist on 3/12/16.
  */
@@ -26,7 +25,7 @@ public class CustomSwipeToRefresh extends SwipeRefreshLayout {
   }
 
   private void initializeBuffer() {
-    scrollBuffer = UnitConverter.dpToPx(SCROLL_BUFFER_DIMEN);
+    scrollBuffer = UnitConverter.INSTANCE.dpToPx(getContext(), SCROLL_BUFFER_DIMEN);
   }
 
   @Override public void addView(View child) {
